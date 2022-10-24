@@ -1,10 +1,10 @@
 #include <iostream>
 #include <vector>
-#include <utility>
+#include <algorithm>
 #include <string>
 #include <cstring>
 
-#define MUTATION_RATE 1
+#define MUTATION_RATE 5
 #define RANDOM_SEED 32
 #define POPULATION_SIZE 3
 
@@ -43,13 +43,42 @@ int get_single_mutation() {
     return static_cast<int>(get_rand()*rand_sign()*MUTATION_RATE);
 }
 
-// Needs refactor
+int get_mutation_amount() {
+    float rate = get_rand();
+
+    if (rate < 0.7){
+        return 1;
+    }else if (rate < 0.95) {
+        return 2;
+    } else {
+        return 3;
+    }
+}
+
+vector<int> get_genes_to_mutate(int params_size){
+
+    vector<int> indexes;
+
+    int mutate_amount = get_mutation_amount();
+    mutate_amount = min(mutate_amount, params_size);
+    
+    vector<int> genes(params_size);
+    for (int i = 0; i < params_size; i++) genes.push_back(i);
+    
+    random_shuffle(genes.begin(), genes.end());
+
+    for (int i = 0; i < mutate_amount; i++) {
+        indexes.push_back(genes[i]);
+    }
+    return indexes;
+}
+
 vector<int> mutate(vector<int> &params) {
     vector<int> mutated;
-    for (int i = 0; i < params.size(); i++) {
-        mutated.push_back(params[i] + get_single_mutation());
+    for (int index : get_genes_to_mutate(params.size())) {
+        params[index] = params[index] + get_single_mutation();
     }
-    return mutated;
+    return params;
 }
 
 vector<vector<int>> mutate_population(vector<vector<int>> &population, int best_index) {
@@ -128,7 +157,7 @@ int main () {
 
 
     vector<int> best;
-    for (int i = 0; i < 200; i++){
+    for (int i = 0; i < 100; i++){
 
         vector<float> results;
 
