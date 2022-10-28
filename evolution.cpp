@@ -7,7 +7,7 @@
 
 #define MUTATION_RATE 5
 #define RANDOM_SEED 32
-#define POPULATION_SIZE 3
+#define POPULATION_SIZE 10
 #define MAX_GENERATIONS 1000
 #define GENS_TO_BALANCE 30
 
@@ -163,7 +163,7 @@ void write_best_to_file(int index, vector<int> &best, ofstream &myfile) {
 int main () {
     srand(RANDOM_SEED);
 
-    system("g++ test.cpp");
+    system("make");
 
     vector<int> pop_seed = {10,10};
     vector<vector<int>> population;
@@ -180,7 +180,7 @@ int main () {
         vector<float> results;
 
         for (int j = 0; j < population.size(); j++){
-            string command_s = params_to_command("./a.out", population[j]);
+            string command_s = params_to_command("./main", population[j]);
             char command[command_s.length() + 1];
             strcpy(command, command_s.c_str());
 
