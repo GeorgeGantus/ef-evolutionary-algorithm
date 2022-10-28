@@ -3,10 +3,13 @@
 #include <algorithm>
 #include <string>
 #include <cstring>
+#include <fstream>
 
 #define MUTATION_RATE 5
 #define RANDOM_SEED 32
 #define POPULATION_SIZE 3
+#define MAX_GENERATIONS 1000
+#define GENS_TO_BALANCE 30
 
 using namespace std;
 
@@ -76,7 +79,7 @@ vector<int> get_genes_to_mutate(int params_size){
 vector<int> mutate(vector<int> &params) {
     vector<int> mutated;
     for (int index : get_genes_to_mutate(params.size())) {
-        params[index] = params[index] + get_single_mutation();
+        params[index] = max(params[index] + get_single_mutation(), 0); // params must be above 0 
     }
     return params;
 }
@@ -146,6 +149,17 @@ vector<vector<int>> intiialize_population(vector<int> seed, int pop_size){
     return population;
 }
 
+void write_best_to_file(int index, vector<int> &best, ofstream &myfile) {
+    myfile << index << " ";
+    for (int value : best) {
+        myfile << value << " ";
+    }
+    int pos = myfile.tellp();
+    myfile.seekp(pos-1);
+    myfile << "\n";
+}
+
+
 int main () {
     srand(RANDOM_SEED);
 
@@ -154,10 +168,14 @@ int main () {
     vector<int> pop_seed = {10,10};
     vector<vector<int>> population;
     population = intiialize_population(pop_seed, POPULATION_SIZE);
-
+    
+    ofstream myfile;
+    myfile.open ("output.txt");
 
     vector<int> best;
-    for (int i = 0; i < 100; i++){
+    int flag = 0;
+
+    for (int i = 0; i < MAX_GENERATIONS; i++){
 
         vector<float> results;
 
@@ -171,14 +189,34 @@ int main () {
         }
 
         int best_index = get_best(population, results);
+
+        if (best == population[best_index]){
+            flag += 1;
+            if (flag == GENS_TO_BALANCE) {
+                break;
+            }
+        }else{
+            flag = 0;
+        }
+
         best = population[best_index];
+        write_best_to_file(i, best, myfile);
+
 
         population = elitism(best,population);
         population = mutate_population(population, best_index);
     }
+
+    if (flag == GENS_TO_BALANCE) {
+        myfile << "Ended by estabilization.\n";
+    } else {
+        myfile << "Ended by max generations.\n";
+    }
+
+
     cout << "The root is:" << endl;
     print_vector(best);
-
+    myfile.close();
     
 
     return 0;
