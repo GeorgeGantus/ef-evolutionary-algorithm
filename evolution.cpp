@@ -17,9 +17,9 @@ float get_rand() {
     return (float) rand()/RAND_MAX;
 }
 
-int get_max_index(vector<float> &array) {
+int get_max_index(vector<int> &array) {
     int i = 0;
-    float current = array[0];
+    int current = array[0];
     for (int j = 0; j < array.size(); j ++){
         if (array[j] > current){
             i = j;
@@ -29,7 +29,7 @@ int get_max_index(vector<float> &array) {
     return i;
 }
 
-int get_best(vector<vector<int>> &population, vector<float> &results) {
+int get_best(vector<vector<int>> &population, vector<int> &results) {
     int max_index = get_max_index(results);
     return max_index;
 }
@@ -123,7 +123,7 @@ string params_to_command(string cmd, vector<int> &params) {
     return cmd;
 }
 
-float get_fitness(char *command) {
+int get_fitness(char *command) {
     FILE *fpipe;
     char ans[256];
 
@@ -133,10 +133,9 @@ float get_fitness(char *command) {
     }
 
     fgets(ans, sizeof ans, fpipe);
-
     pclose(fpipe);
 
-    float fitness = stof(ans);
+    int fitness = stoi(ans);
     return fitness;
 }
 
@@ -149,13 +148,14 @@ vector<vector<int>> intiialize_population(vector<int> seed, int pop_size){
     return population;
 }
 
-void write_best_to_file(int index, vector<int> &best, ofstream &myfile) {
+void write_best_to_file(int index, vector<int> &best, ofstream &myfile, int fitness) {
     myfile << index << " ";
     for (int value : best) {
         myfile << value << " ";
     }
-    int pos = myfile.tellp();
-    myfile.seekp(pos-1);
+    myfile << fitness;
+    /* int pos = myfile.tellp();
+    myfile.seekp(pos-1); */
     myfile << "\n";
 }
 
@@ -163,9 +163,9 @@ void write_best_to_file(int index, vector<int> &best, ofstream &myfile) {
 int main () {
     srand(RANDOM_SEED);
 
-    system("make");
+    system("g++ test.cpp");
 
-    vector<int> pop_seed = {10,10};
+    vector<int> pop_seed = {2, 2};
     vector<vector<int>> population;
     population = intiialize_population(pop_seed, POPULATION_SIZE);
     
@@ -177,14 +177,14 @@ int main () {
 
     for (int i = 0; i < MAX_GENERATIONS; i++){
 
-        vector<float> results;
+        vector<int> results;
 
         for (int j = 0; j < population.size(); j++){
-            string command_s = params_to_command("./main", population[j]);
+            string command_s = params_to_command("./a.out", population[j]);
             char command[command_s.length() + 1];
             strcpy(command, command_s.c_str());
 
-            float fitness = get_fitness(command);
+            int fitness = get_fitness(command);
             results.push_back(fitness);
         }
 
@@ -200,7 +200,7 @@ int main () {
         }
 
         best = population[best_index];
-        write_best_to_file(i, best, myfile);
+        write_best_to_file(i, best, myfile, results[best_index]);
 
 
         population = elitism(best,population);
