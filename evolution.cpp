@@ -7,8 +7,8 @@
 
 #define MUTATION_RATE 5
 #define RANDOM_SEED 32
-#define POPULATION_SIZE 10
-#define MAX_GENERATIONS 1000
+#define POPULATION_SIZE 3
+#define MAX_GENERATIONS 200
 #define GENS_TO_BALANCE 30
 
 using namespace std;
@@ -123,12 +123,17 @@ string params_to_command(string cmd, vector<int> &params) {
     return cmd;
 }
 
-int get_fitness(char *command) {
+int get_fitness(vector<int> &individual) {
+
+    string command_s = params_to_command("./a.out", individual);
+    char command[command_s.length() + 1];
+    strcpy(command, command_s.c_str());
+
     FILE *fpipe;
     char ans[256];
 
     if (!(fpipe = (FILE*)popen(command,"r"))){
-        cerr << "Falha ";
+        cerr << "Falha ao iniciar processo";
         exit(1);
     }
 
@@ -137,6 +142,15 @@ int get_fitness(char *command) {
 
     int fitness = stoi(ans);
     return fitness;
+}
+
+vector<int> get_population_fitness(vector<vector<int>> &population) {
+    vector<int> results;
+    for (int j = 0; j < population.size(); j++){
+        int fitness = get_fitness(population[j]);
+        results.push_back(fitness);
+    }
+    return results;
 }
 
 vector<vector<int>> intiialize_population(vector<int> seed, int pop_size){
@@ -173,24 +187,17 @@ int main () {
     myfile.open ("output.txt");
 
     vector<int> best;
+    int prev_best_fitness = -1;
     int flag = 0;
 
     for (int i = 0; i < MAX_GENERATIONS; i++){
 
         vector<int> results;
-
-        for (int j = 0; j < population.size(); j++){
-            string command_s = params_to_command("./a.out", population[j]);
-            char command[command_s.length() + 1];
-            strcpy(command, command_s.c_str());
-
-            int fitness = get_fitness(command);
-            results.push_back(fitness);
-        }
+        results = get_population_fitness(population);
 
         int best_index = get_best(population, results);
 
-        if (best == population[best_index]){
+        if (prev_best_fitness == results[best_index]){
             flag += 1;
             if (flag == GENS_TO_BALANCE) {
                 break;
@@ -199,6 +206,7 @@ int main () {
             flag = 0;
         }
 
+        prev_best_fitness = results[best_index];
         best = population[best_index];
         write_best_to_file(i, best, myfile, results[best_index]);
 
